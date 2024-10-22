@@ -1,4 +1,7 @@
+version: '3.8'
+
 services:
+  # Back-End: Spring Boot
   backend:
     build: backend
     restart: always
@@ -6,17 +9,22 @@ services:
       - db-password
     environment:
       MYSQL_HOST: db
+      MYSQL_DATABASE: example
+      MYSQL_USER: root
+      MYSQL_PASSWORD_FILE: /run/secrets/db-password
     networks:
       - react-spring
       - spring-mysql
     depends_on:
       db:
         condition: service_healthy
+
+  # Database: MariaDB
   db:
-    # We use a mariadb image which supports both amd64 & arm64 architecture
+    # MariaDB image supporting both amd64 & arm64 architectures
     image: mariadb:10.6.4-focal
-    # If you really want to use MySQL, uncomment the following line
-    #image: mysql:8.0.19
+    # Uncomment the below line if using MySQL instead of MariaDB
+    # image: mysql:8.0.19
     environment:
       - MYSQL_DATABASE=example
       - MYSQL_ROOT_PASSWORD_FILE=/run/secrets/db-password
@@ -32,6 +40,8 @@ services:
       - db-data:/var/lib/mysql
     networks:
       - spring-mysql
+
+  # Front-End: React App
   frontend:
     build:
       context: frontend
@@ -45,14 +55,14 @@ services:
       - react-spring
     depends_on:
       - backend
-    expose:
-      - 3306
-      - 33060
+
 volumes:
   db-data: {}
+
 secrets:
   db-password:
     file: db/password.txt
+
 networks:
   react-spring: {}
   spring-mysql: {}
